@@ -6,9 +6,13 @@ import { Card, PhraseCard } from '@/components/Card';
 import { Button, PlayButton } from '@/components/Button';
 import { ToneLadder } from '@/components/ToneLadder';
 import { useSpeechRecognition, useAudio } from '@/hooks/useSpeechRecognition';
-import { markLessonComplete, xpProgressInLevel, xpToNextLevel } from '@/lib/progress';
+import { markLessonComplete, xpProgressInLevel, xpToNextLevel, getStoredProfile, getStoredProgress, getStoredAchievements, getWeeklyActivity, getTriedDialects, saveAchievements, incrementLessonsCompleted, addStudyMinutes, addToWeeklyActivity } from '@/lib/progress';
+import { checkAndAwardAchievements } from '@/lib/achievements';
+import { addLessonFlashcards } from '@/lib/flashcard-review';
 import { getLessonById, getNextLesson } from '@/lib/lessons';
 import { isDevMode } from '@/lib/config';
+import { AudioResourcesPanel } from '@/components/AudioResourcesPanel';
+import FavoritesButton from '@/components/FavoritesButton';
 
 interface LessonPlayerProps {
   lessonId: string;
@@ -86,7 +90,43 @@ export function LessonPlayer({ lessonId, onComplete, onExit }: LessonPlayerProps
       xpEarned += Math.round(totalScore / 10); // Bonus XP for quiz
     }
     
-    markLessonComplete(lessonId, xpEarned, totalScore);
+    // Complete the lesson (updates XP, level, streak)
+    markLessonComplete(lessonId, xpEarned, lesson.dialect, totalScore);
+    
+    // Add flashcards for spaced repetition review
+    addLessonFlashcards(lessonId);
+    
+    // Track daily goal progress (assume ~5 minutes per lesson)
+    incrementLessonsCompleted();
+    addStudyMinutes(5);
+    addToWeeklyActivity(5); // Track weekly activity
+    
+    // Check and award any new achievements
+    const profile = getStoredProfile();
+    const storedProgress = getStoredProgress();
+    if (profile) {
+      // Build current progress state for achievement checking
+      const currentState = {
+        profile,
+        completedLessons: storedProgress || {}, // Pass actual completed lessons
+        achievements: getStoredAchievements() || {},
+        weeklyActivity: getWeeklyActivity() || {},
+        triedDialects: getTriedDialects(),
+      };
+      const { newAchievements, updatedState } = checkAndAwardAchievements(currentState);
+      
+      // Save any newly earned achievements
+      if (newAchievements.length > 0) {
+        saveAchievements(updatedState.achievements);
+        
+        // Show notification for new achievements
+        if (typeof window !== 'undefined') {
+          const achievementNames = newAchievements.map(a => `${a.icon} ${a.title}`).join(', ');
+          // Brief visual feedback will be shown in the complete section
+        }
+      }
+    }
+    
     setSection('complete');
     onComplete(xpEarned);
   };
@@ -96,7 +136,10 @@ export function LessonPlayer({ lessonId, onComplete, onExit }: LessonPlayerProps
     return (
       <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#1A1816] flex items-center justify-center p-4">
         <Card className="max-w-md w-full text-center py-8">
-          <h1 className="text-3xl font-bold mb-2">{lesson.title}</h1>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <h1 className="text-3xl font-bold">{lesson.title}</h1>
+            <FavoritesButton lessonId={lessonId} size="sm" />
+          </div>
           <p className="text-gray-500 mb-4">{lesson.subtitle}</p>
           
           <div className="text-sm text-gray-400 mb-8">{lesson.duration}</div>
@@ -130,6 +173,7 @@ export function LessonPlayer({ lessonId, onComplete, onExit }: LessonPlayerProps
     return (
       <LessonVocabularySection
         lesson={lesson}
+        lessonId={lessonId}
         vocabIndex={vocabIndex}
         progress={progress}
         onNext={handleNextVocab}
@@ -198,6 +242,7 @@ export function LessonPlayer({ lessonId, onComplete, onExit }: LessonPlayerProps
 // Vocabulary Section Component
 function LessonVocabularySection({
   lesson,
+  lessonId,
   vocabIndex,
   progress,
   onNext,
@@ -205,6 +250,7 @@ function LessonVocabularySection({
   onExit,
 }: {
   lesson: Lesson;
+  lessonId: string;
   vocabIndex: number;
   progress: number;
   onNext: () => void;
@@ -239,9 +285,12 @@ function LessonVocabularySection({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          <span className="text-sm text-gray-500">
-            {vocabIndex + 1}/{lesson.vocabulary.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <FavoritesButton lessonId={lessonId} size="sm" />
+            <span className="text-sm text-gray-500">
+              {vocabIndex + 1}/{lesson.vocabulary.length}
+            </span>
+          </div>
         </div>
         
         {/* Progress */}
@@ -280,19 +329,9 @@ function LessonVocabularySection({
           </span>
         </div>
 
-        {/* Audio Status - Dev Mode */}
+        {/* Audio Resources Panel - Dev Mode */}
         {devMode && (
-          <Card className="mb-6 bg-brand-brown/5 border-brand-brown/20">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-sm text-brand-brown">🔧 Audio Resources</h3>
-              <span className="text-xs px-2 py-1 rounded bg-brand-brown/10 text-brand-brown">
-                Dev Mode
-              </span>
-            </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              👨‍💻 Developer Mode active. Authentic Hokkien recordings coming soon!
-            </p>
-          </Card>
+          <AudioResourcesPanel lessonId={lessonId} />
         )}
 
         {/* Audio Resources Note */}

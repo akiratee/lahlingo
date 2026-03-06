@@ -49,6 +49,8 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
       level: 1,
       xp: 0,
       streak: 0,
+      streakFreezes: 1,
+      longestStreak: 0,
       lastStudyDate: null,
       createdAt: new Date().toISOString(),
     };

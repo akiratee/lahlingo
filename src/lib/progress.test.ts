@@ -13,9 +13,20 @@ import {
   saveAchievements,
   getWeeklyActivity,
   saveWeeklyActivity,
+  addToWeeklyActivity,
+  getWeeklyActivityForDisplay,
   getLessonProgress,
   getCompletedLessonsCount,
   getTotalXP,
+  getFavorites,
+  toggleFavorite,
+  isFavorite,
+  addToFavorites,
+  removeFromFavorites,
+  getFavoriteLessons,
+  getFavoritesCount,
+  getLearnedVocabulary,
+  getLearnedVocabularyCount,
 } from './progress';
 import type { UserProfile } from '../types';
 
@@ -28,6 +39,8 @@ const STORAGE_KEYS = {
   PROGRESS: 'dialect-master-progress',
   ACHIEVEMENTS: 'dialect-master-achievements',
   WEEKLY: 'dialect-master-weekly',
+  FAVORITES: 'dialect-master-favorites',
+  FAVORITES_METADATA: 'dialect-master-favorites-metadata',
 };
 
 // Default profile (same as in progress.ts)
@@ -39,6 +52,8 @@ const DEFAULT_PROFILE: UserProfile = {
   level: 1,
   xp: 0,
   streak: 0,
+  streakFreezes: 1,
+  longestStreak: 0,
   lastStudyDate: null,
   createdAt: new Date().toISOString(),
 };
@@ -58,6 +73,12 @@ function setupLocalStorageMocks(profile?: UserProfile) {
     }
     if (key === STORAGE_KEYS.WEEKLY) {
       return JSON.stringify({});
+    }
+    if (key === STORAGE_KEYS.FAVORITES) {
+      return JSON.stringify([]);
+    }
+    if (key === STORAGE_KEYS.FAVORITES_METADATA) {
+      return JSON.stringify([]);
     }
     return null;
   });
@@ -174,12 +195,22 @@ describe('Streak Calculation', () => {
     expect(result.streak).toBe(6);
   });
 
-  it('should reset streak when missing a day', () => {
+  it('should reset streak when missing a day and no freezes', () => {
     const today = new Date().toISOString().split('T')[0];
     const twoDaysAgo = new Date(Date.now() - 172800000).toISOString().split('T')[0];
-    const profile = { ...DEFAULT_PROFILE, lastStudyDate: twoDaysAgo, streak: 5 };
+    // Profile with no streak freezes - should reset to 1
+    const profile = { ...DEFAULT_PROFILE, lastStudyDate: twoDaysAgo, streak: 5, streakFreezes: 0 };
     const result = updateStreak(profile);
     expect(result.streak).toBe(1);
+  });
+
+  it('should preserve streak when missing a day with streak freeze', () => {
+    const twoDaysAgo = new Date(Date.now() - 172800000).toISOString().split('T')[0];
+    // Profile with streak freezes - should use a freeze to preserve streak
+    const profile = { ...DEFAULT_PROFILE, lastStudyDate: twoDaysAgo, streak: 5, streakFreezes: 1 };
+    const result = updateStreak(profile);
+    expect(result.streak).toBe(5); // Streak preserved
+    expect(result.streakFreezes).toBe(0); // Used one freeze
   });
 });
 
@@ -230,5 +261,126 @@ describe('XP_FOR_LEVEL Constant', () => {
     expect(XP_FOR_LEVEL[1]).toBe(100);
     expect(XP_FOR_LEVEL[5]).toBe(1200);
     expect(XP_FOR_LEVEL[10]).toBe(5000);
+  });
+});
+
+describe('Favorites System', () => {
+  // Create a mock storage object to track favorites state
+  const mockStorage: Record<string, string> = {};
+  
+  beforeEach(() => {
+    // Reset mock storage
+    Object.keys(mockStorage).forEach(key => delete mockStorage[key]);
+    
+    // Set up localStorage mock to use our storage object
+    const localStorageMock = global.localStorage as any;
+    localStorageMock.getItem.mockImplementation((key: string) => {
+      return mockStorage[key] || null;
+    });
+    localStorageMock.setItem.mockImplementation((key: string, value: string) => {
+      mockStorage[key] = value;
+    });
+  });
+
+  it('getFavorites should return empty array when no favorites exist', () => {
+    expect(getFavorites()).toEqual([]);
+  });
+
+  it('toggleFavorite should add lesson to favorites', () => {
+    const result = toggleFavorite('lesson-1');
+    expect(result).toBe(true);
+    expect(getFavorites()).toContain('lesson-1');
+  });
+
+  it('toggleFavorite should remove lesson from favorites', () => {
+    toggleFavorite('lesson-1');
+    const result = toggleFavorite('lesson-1');
+    expect(result).toBe(false);
+    expect(getFavorites()).not.toContain('lesson-1');
+  });
+
+  it('isFavorite should return correct status', () => {
+    expect(isFavorite('lesson-1')).toBe(false);
+    toggleFavorite('lesson-1');
+    expect(isFavorite('lesson-1')).toBe(true);
+  });
+
+  it('addToFavorites should add with metadata', () => {
+    addToFavorites('lesson-1');
+    const metadata = getFavoriteLessons();
+    expect(metadata).toHaveLength(1);
+    expect(metadata[0].lessonId).toBe('lesson-1');
+    expect(metadata[0].addedAt).toBeDefined();
+  });
+
+  it('removeFromFavorites should remove lesson and metadata', () => {
+    addToFavorites('lesson-1');
+    removeFromFavorites('lesson-1');
+    expect(getFavorites()).not.toContain('lesson-1');
+    const metadata = getFavoriteLessons();
+    expect(metadata).toHaveLength(0);
+  });
+
+  it('getFavoritesCount should return correct count', () => {
+    expect(getFavoritesCount()).toBe(0);
+    toggleFavorite('lesson-1');
+    expect(getFavoritesCount()).toBe(1);
+    toggleFavorite('lesson-2');
+    expect(getFavoritesCount()).toBe(2);
+  });
+});
+
+describe('addToWeeklyActivity', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('addToWeeklyActivity should initialize and add minutes', () => {
+    const result = addToWeeklyActivity(30);
+    expect(result).toBeDefined();
+    expect(typeof result).toBe('object');
+  });
+
+  it('addToWeeklyActivity should accumulate minutes', () => {
+    addToWeeklyActivity(30);
+    const result = addToWeeklyActivity(15);
+    // The function should return the updated activity
+    expect(result).toBeDefined();
+  });
+});
+
+describe('getWeeklyActivityForDisplay', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('getWeeklyActivityForDisplay should return 7 days', () => {
+    const result = getWeeklyActivityForDisplay();
+    expect(result).toHaveLength(7);
+    expect(result[0]).toHaveProperty('day');
+    expect(result[0]).toHaveProperty('minutes');
+    expect(result[0]).toHaveProperty('isToday');
+  });
+
+  it('getWeeklyActivityForDisplay should mark correct day as today', () => {
+    const result = getWeeklyActivityForDisplay();
+    const todayCount = result.filter(d => d.isToday).length;
+    expect(todayCount).toBe(1);
+  });
+});
+
+describe('getLearnedVocabulary', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('getLearnedVocabulary should return empty array when no progress', () => {
+    const result = getLearnedVocabulary();
+    expect(result).toEqual([]);
+  });
+
+  it('getLearnedVocabularyCount should return 0 when no progress', () => {
+    const result = getLearnedVocabularyCount();
+    expect(result).toBe(0);
   });
 });

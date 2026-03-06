@@ -10,7 +10,9 @@ import {
   calculateLevel,
   xpProgressInLevel,
   xpToNextLevel,
-  resetAllProgress 
+  resetAllProgress,
+  getEarnedAchievementsCount,
+  isAchievementEarned
 } from '@/lib/progress';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import { UserProfile, Dialect } from '@/types';
@@ -28,6 +30,7 @@ export function ProfileScreen({ onBack, onDialectChange, onOpenSettings }: Profi
   const [completedLessons, setCompletedLessons] = useState(0);
   const [totalXP, setTotalXP] = useState(0);
   const [devMode, setDevModeState] = useState(false);
+  const [earnedAchievements, setEarnedAchievements] = useState(0);
 
   useEffect(() => {
     const storedProfile = getStoredProfile();
@@ -35,6 +38,7 @@ export function ProfileScreen({ onBack, onDialectChange, onOpenSettings }: Profi
       setProfile(storedProfile);
       setCompletedLessons(getCompletedLessonsCount());
       setTotalXP(getTotalXP());
+      setEarnedAchievements(getEarnedAchievementsCount());
     }
     setDevModeState(isDevMode());
   }, []);
@@ -64,11 +68,6 @@ export function ProfileScreen({ onBack, onDialectChange, onOpenSettings }: Profi
   const level = calculateLevel(totalXP);
   const xpInLevel = xpProgressInLevel(totalXP, level);
   const xpNeeded = xpToNextLevel(level);
-  
-  const earnedAchievements = ACHIEVEMENTS.filter(a => {
-    // Would check actual earned status
-    return false;
-  }).length;
 
   const handleDialectSelect = (dialect: Dialect) => {
     const updatedProfile = { ...profile, selectedDialect: dialect };
@@ -189,20 +188,25 @@ export function ProfileScreen({ onBack, onDialectChange, onOpenSettings }: Profi
             <span className="text-sm text-gray-500">
               {earnedAchievements}/{ACHIEVEMENTS.length} earned
             </span>
-            <button className="text-sm text-brand-brown hover:underline">
-              View All →
-            </button>
           </div>
           <div className="flex flex-wrap gap-3">
-            {ACHIEVEMENTS.slice(0, 6).map(achievement => (
-              <div 
-                key={achievement.id}
-                className="w-16 h-16 rounded-lg border-2 border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center text-center p-1 opacity-50"
-                title={achievement.title}
-              >
-                <span className="text-xl">{achievement.icon}</span>
-              </div>
-            ))}
+            {ACHIEVEMENTS.slice(0, 6).map(achievement => {
+              const earned = isAchievementEarned(achievement.key);
+              return (
+                <div 
+                  key={achievement.id}
+                  className={`w-16 h-16 rounded-lg border-2 flex flex-col items-center justify-center text-center p-1 ${
+                    earned 
+                      ? 'border-brand-brown bg-brand-brown/10 opacity-100' 
+                      : 'border-gray-200 dark:border-gray-700 opacity-40'
+                  }`}
+                  title={`${achievement.title}: ${achievement.description}${earned ? ' (Earned!)' : ''}`}
+                >
+                  <span className="text-xl">{achievement.icon}</span>
+                  <span className="text-[8px] leading-tight mt-0.5 line-clamp-2">{achievement.title}</span>
+                </div>
+              );
+            })}
           </div>
         </Card>
         

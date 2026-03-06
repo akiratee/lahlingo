@@ -11,9 +11,11 @@
   --tone-1: #4CAF50;
   --tone-2: #2196F3;
   --tone-3: #F44336;
+  --tone-4: #00BCD4;
   --tone-5: #9E9E9E;
   --tone-6: #FF9800;
   --tone-7: #673AB7;
+  --tone-8: #E91E63;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -81,9 +83,11 @@ body {
 .text-tone-1 { color: var(--tone-1); }
 .text-tone-2 { color: var(--tone-2); }
 .text-tone-3 { color: var(--tone-3); }
+.text-tone-4 { color: var(--tone-4); }
 .text-tone-5 { color: var(--tone-5); }
 .text-tone-6 { color: var(--tone-6); }
 .text-tone-7 { color: var(--tone-7); }
+.text-tone-8 { color: var(--tone-8); }
 
 .bg-tone-1 { background-color: var(--tone-1); }
 .bg-tone-2 { background-color: var(--tone-2); }

@@ -14,6 +14,8 @@ export const DEFAULT_TTS_CONFIG: TTSConfig = {
 
 // Browser TTS function
 export function browserTTS(text: string, speed: number = 0.8): void {
+  if (typeof window === 'undefined') return;
+  
   if (!window.speechSynthesis) {
     throw new Error('Speech synthesis not supported');
   }

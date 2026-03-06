@@ -66,13 +66,15 @@ export const cardVariants = {
 }
 
 // Tone ladder visualization
-export const toneLadderData = {
+export const toneLadderData: Record<1|2|3|4|5|6|7|8, { label: string; color: string; contour: string }> = {
   1: { label: 'Tone 1', color: 'tone-1', contour: '═' },
   2: { label: 'Tone 2', color: 'tone-2', contour: '╱' },
   3: { label: 'Tone 3', color: 'tone-3', contour: '╲' },
+  4: { label: 'Tone 4', color: 'tone-4', contour: '╲╱' },
   5: { label: 'Tone 5', color: 'tone-5', contour: '═' },
   6: { label: 'Tone 6', color: 'tone-6', contour: '╲_' },
   7: { label: 'Tone 7', color: 'tone-7', contour: '─┐' },
+  8: { label: 'Tone 8', color: 'tone-8', contour: '╱═' },
 }
 
 // Progress bar

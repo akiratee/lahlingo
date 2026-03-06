@@ -3,7 +3,7 @@
 import { toneLadderData } from './design-system';
 
 interface ToneLadderProps {
-  tone: 1 | 2 | 3 | 5 | 6 | 7;
+  tone: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
 }
@@ -17,13 +17,15 @@ export function ToneLadder({ tone, size = 'md', showLabel = true }: ToneLadderPr
     lg: 'text-2xl',
   };
   
-  const colorClasses = {
+  const colorClasses: Record<1|2|3|4|5|6|7|8, string> = {
     1: 'text-tone-1',
     2: 'text-tone-2',
     3: 'text-tone-3',
+    4: 'text-tone-4',
     5: 'text-tone-5',
     6: 'text-tone-6',
     7: 'text-tone-7',
+    8: 'text-tone-8',
   };
   
   return (
@@ -41,12 +43,12 @@ export function ToneLadder({ tone, size = 'md', showLabel = true }: ToneLadderPr
 }
 
 interface ToneSelectorProps {
-  selectedTone: 1 | 2 | 3 | 5 | 6 | 7;
-  onSelect: (tone: 1 | 2 | 3 | 5 | 6 | 7) => void;
+  selectedTone: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  onSelect: (tone: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8) => void;
 }
 
 export function ToneSelector({ selectedTone, onSelect }: ToneSelectorProps) {
-  const tones: (1 | 2 | 3 | 5 | 6 | 7)[] = [1, 2, 3, 5, 6, 7];
+  const tones: (1 | 2 | 3 | 4 | 5 | 6 | 7 | 8)[] = [1, 2, 3, 4, 5, 6, 7, 8];
   
   return (
     <div className="flex gap-2 justify-center flex-wrap">
@@ -74,7 +76,7 @@ export function ToneSelector({ selectedTone, onSelect }: ToneSelectorProps) {
 // Visual representation of all tones
 export function ToneComparisonGrid() {
   return (
-    <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
+    <div className="grid grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
       <div className="text-center">
         <ToneLadder tone={1} size="sm" />
       </div>
@@ -85,6 +87,9 @@ export function ToneComparisonGrid() {
         <ToneLadder tone={3} size="sm" />
       </div>
       <div className="text-center">
+        <ToneLadder tone={4} size="sm" />
+      </div>
+      <div className="text-center">
         <ToneLadder tone={5} size="sm" />
       </div>
       <div className="text-center">
@@ -92,6 +97,9 @@ export function ToneComparisonGrid() {
       </div>
       <div className="text-center">
         <ToneLadder tone={7} size="sm" />
+      </div>
+      <div className="text-center">
+        <ToneLadder tone={8} size="sm" />
       </div>
     </div>
   );

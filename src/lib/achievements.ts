@@ -1,5 +1,8 @@
 // Achievement definitions and management
-import { Achievement, UserProgressState } from '../types';
+import { Achievement, UserProgressState, Dialect } from '../types';
+import { getTriedDialects } from './progress';
+
+const ALL_DIALECTS: Dialect[] = ['hokkien', 'teochew', 'cantonese', 'hakka'];
 
 export const ACHIEVEMENTS: Achievement[] = [
   {
@@ -31,7 +34,16 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'a4',
-    key: 'first_week',
+    key: 'streak-3',
+    title: 'Three Day Fire',
+    description: 'Maintain a 3-day streak',
+    icon: '🔥',
+    xpBonus: 200,
+    condition: (state) => state.profile.streak >= 3,
+  },
+  {
+    id: 'a4b',
+    key: 'streak-7',
     title: 'First Week',
     description: 'Maintain a 7-day streak',
     icon: '🔥',
@@ -40,12 +52,39 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'a5',
-    key: 'month_warrior',
+    key: 'streak-14',
+    title: 'Two Week Champion',
+    description: 'Maintain a 14-day streak',
+    icon: '💪',
+    xpBonus: 750,
+    condition: (state) => state.profile.streak >= 14,
+  },
+  {
+    id: 'a5b',
+    key: 'streak-30',
     title: 'Month Warrior',
     description: 'Maintain a 30-day streak',
-    icon: '💪',
+    icon: '⚔️',
     xpBonus: 1000,
     condition: (state) => state.profile.streak >= 30,
+  },
+  {
+    id: 'a5c',
+    key: 'streak-60',
+    title: 'Two Month Titan',
+    description: 'Maintain a 60-day streak',
+    icon: '🗡️',
+    xpBonus: 1500,
+    condition: (state) => state.profile.streak >= 60,
+  },
+  {
+    id: 'a5d',
+    key: 'streak-100',
+    title: 'Century Streak',
+    description: 'Maintain a 100-day streak',
+    icon: '👑',
+    xpBonus: 2500,
+    condition: (state) => state.profile.streak >= 100,
   },
   {
     id: 'a6',
@@ -79,8 +118,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: '🗺️',
     xpBonus: 400,
     condition: (state) => {
-      // Track which dialects tried
-      return false; // Would need dialect tracking
+      const triedDialects = getTriedDialects();
+      return ALL_DIALECTS.every(d => triedDialects.includes(d));
     },
   },
   {

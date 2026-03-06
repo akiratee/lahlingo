@@ -2,7 +2,7 @@
 
 export type Dialect = 'hokkien' | 'teochew' | 'cantonese' | 'hakka';
 
-export type Tone = 1 | 2 | 3 | 5 | 6 | 7;
+export type Tone = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export type Level = 'beginner' | 'some' | 'conversational';
 
@@ -14,8 +14,11 @@ export interface UserProfile {
   level: number;
   xp: number;
   streak: number;
+  streakFreezes: number; // Number of streak freezes available
+  longestStreak: number; // Track longest streak ever
   lastStudyDate: string | null;
   createdAt: string;
+  quizStats?: QuizStats;
 }
 
 export interface Phrase {
@@ -52,6 +55,8 @@ export interface QuizQuestion {
   question: string;
   options: string[];
   correctIndex: number;
+  lessonId?: string;
+  lessonTitle?: string;
 }
 
 export interface Lesson {
@@ -102,6 +107,16 @@ export interface UserProgressState {
   completedLessons: Record<string, UserProgress>;
   achievements: Record<string, boolean>;
   weeklyActivity: Record<string, number>; // date -> minutes studied
+  triedDialects: Dialect[]; // Track which dialects user has tried
+  quizStats?: QuizStats;
+}
+
+export interface QuizStats {
+  totalQuizzes: number;
+  totalCorrect: number;
+  totalQuestions: number;
+  bestStreak: number;
+  xpEarned: number;
 }
 
 export interface LessonState {
@@ -123,9 +138,11 @@ export const TONE_CONFIGS: Record<Tone, ToneConfig> = {
   1: { label: 'Tone 1', color: '#4CAF50', bgColor: 'bg-[#4CAF50]', contour: '═' },
   2: { label: 'Tone 2', color: '#2196F3', bgColor: 'bg-[#2196F3]', contour: '╱' },
   3: { label: 'Tone 3', color: '#F44336', bgColor: 'bg-[#F44336]', contour: '╲' },
+  4: { label: 'Tone 4', color: '#00BCD4', bgColor: 'bg-[#00BCD4]', contour: '╲╱' },
   5: { label: 'Tone 5', color: '#9E9E9E', bgColor: 'bg-[#9E9E9E]', contour: '═' },
   6: { label: 'Tone 6', color: '#FF9800', bgColor: 'bg-[#FF9800]', contour: '╲_' },
   7: { label: 'Tone 7', color: '#673AB7', bgColor: 'bg-[#673AB7]', contour: '─┐' },
+  8: { label: 'Tone 8', color: '#E91E63', bgColor: 'bg-[#E91E63]', contour: '╱═' },
 };
 
 export const DIALECT_INFO: Record<Dialect, { name: string; chinese: string; description: string }> = {

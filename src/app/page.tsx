@@ -6,11 +6,12 @@ import { OnboardingScreen } from '@/components/OnboardingScreen';
 import { ProfileScreen } from '@/components/ProfileScreen';
 import { SettingsScreen } from '@/components/SettingsScreen';
 import { LessonPlayer } from '@/components/LessonPlayer';
+import { StatsScreen } from '@/components/StatsScreen';
 import { getStoredProfile } from '@/lib/progress';
 import { Dialect } from '@/types';
 
 export default function Home() {
-  const [currentScreen, setCurrentScreen] = useState<'onboarding' | 'home' | 'profile' | 'settings' | 'lesson'>('onboarding');
+  const [currentScreen, setCurrentScreen] = useState<'onboarding' | 'home' | 'profile' | 'settings' | 'lesson' | 'stats'>('onboarding');
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
   const [selectedDialect, setSelectedDialect] = useState<Dialect>('hokkien');
 
@@ -33,6 +34,8 @@ export default function Home() {
       setCurrentScreen('home');
     } else if (screen === 'settings') {
       setCurrentScreen('settings');
+    } else if (screen === 'stats') {
+      setCurrentScreen('stats');
     }
   };
 
@@ -84,6 +87,11 @@ export default function Home() {
         onOpenSettings={() => setCurrentScreen('settings')}
       />
     );
+  }
+
+  // Show stats screen
+  if (currentScreen === 'stats') {
+    return <StatsScreen onBack={() => setCurrentScreen('home')} />;
   }
 
   // Show home screen with lesson navigation

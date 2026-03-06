@@ -29,7 +29,9 @@ export function useSpeechRecognition(
   const [recognition, setRecognition] = useState<any>(null);
 
   useEffect(() => {
-    // Check for browser support
+    // Check for browser support (SSR guard)
+    if (typeof window === 'undefined') return;
+    
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
     if (SpeechRecognition) {
@@ -112,6 +114,7 @@ export function useSpeechRecognition(
   }, [recognition]);
 
   const supportCheck = useCallback(() => {
+    if (typeof window === 'undefined') return false;
     return !!(window as any).SpeechRecognition || !!(window as any).webkitSpeechRecognition;
   }, []);
 
@@ -254,7 +257,7 @@ export function useAudio(): UseAudioReturn {
   }, []);
 
   const stop = useCallback(() => {
-    if (window.speechSynthesis) {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
     setIsPlaying(false);
